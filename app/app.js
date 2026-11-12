@@ -34,19 +34,52 @@ function render(incidents) {
   empty.hidden = list.children.length > 0;
 }
 
-list.addEventListener('click', async (e) => {
-  const button = e.target.closest('[data-testid="ack"]');
+// New rows keep arriving at the top (R1), so a click can land on a row that just moved under the pointer.
+// The confirm names the incident, so on-call sees which one they are about to take (product, after step 1).
+const confirmBox = document.querySelector('[data-testid="confirm"]');
+const confirmText = confirmBox.querySelector('.confirm-text');
+let pending = null;
+
+function askToConfirm(row) {
+  pending = row.dataset.id;
+  confirmText.textContent = `Ack ${pending}? ${row.querySelector('.what').textContent}`;
+  confirmBox.hidden = false;
+  confirmBox.querySelector('[data-testid="confirm-ack"]').focus();
+}
+
+function closeConfirm() {
+  pending = null;
+  confirmBox.hidden = true;
+}
+
+async function ackIncident(id) {
+  const row = list.querySelector(`[data-testid="incident-row"][data-id="${CSS.escape(id)}"]`);
+  const button = row?.querySelector('[data-testid="ack"]');
   if (!button) return;
-  const row = button.closest('[data-testid="incident-row"]');
   button.disabled = true;
   try {
-    await ack(row.dataset.id);
-    acked.add(row.dataset.id);
+    await ack(id);
+    acked.add(id);
     button.outerHTML = '<span data-testid="acked" class="acked">acked</span>';
   } catch (err) {
     console.error(err);
     button.disabled = false;
   }
+}
+
+list.addEventListener('click', (e) => {
+  const button = e.target.closest('[data-testid="ack"]');
+  if (button) askToConfirm(button.closest('[data-testid="incident-row"]'));
+});
+
+confirmBox.querySelector('[data-testid="confirm-ack"]').addEventListener('click', () => {
+  const id = pending;
+  closeConfirm();
+  if (id) ackIncident(id);
+});
+confirmBox.querySelector('[data-testid="confirm-cancel"]').addEventListener('click', closeConfirm);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !confirmBox.hidden) closeConfirm();
 });
 
 async function refresh() {

@@ -18,6 +18,13 @@
       <p data-testid="empty" class="empty" hidden>No incidents tonight.</p>
       <ul data-testid="incident-list" class="list"></ul>
     </main>
+    <div data-testid="confirm" class="confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text" hidden>
+      <div class="confirm-box">
+        <p id="confirm-text" class="confirm-text"></p>
+        <button data-testid="confirm-ack" type="button">Ack</button>
+        <button data-testid="confirm-cancel" type="button">Cancel</button>
+      </div>
+    </div>
     <footer>sched-prod incident board · build <span data-testid="build-sha">__BUILD_SHA__</span></footer>
   </body>
 </html>
